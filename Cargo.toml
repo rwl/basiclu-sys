@@ -1,0 +1,15 @@
+[package]
+name = "basiclu-sys"
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR GPL-3.0-or-later"
+
+[build-dependencies]
+bindgen = "0.58"
+#cbindgen = "0.24.3"
+
+[dependencies]
+
+#[lib]
+#name = "blurs"
+#crate-type = ["cdylib", "staticlib"]
