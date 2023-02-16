@@ -5,6 +5,8 @@ use std::path::PathBuf;
 use std::process::Command;
 
 fn main() {
+    let out_dir = env::var("OUT_DIR").unwrap();
+
     // This is the directory where the `c` library is located.
     let libdir_path = PathBuf::from("vendor")
         // Canonicalize the path as `rustc-link-search` requires an absolute
@@ -22,10 +24,11 @@ fn main() {
     // let lib_path = libdir_path.join("lib").join("libbasiclu.a");
 
     // Tell cargo to look for shared libraries in the specified directory
-    println!(
-        "cargo:rustc-link-search={}",
-        libdir_path.join("lib").to_str().unwrap()
-    );
+    // println!(
+    //     "cargo:rustc-link-search={}",
+    //     libdir_path.join("lib").to_str().unwrap()
+    // );
+    println!("cargo:rustc-link-search={}", out_dir);
 
     // Tell cargo to tell rustc to link our `hello` library. Cargo will
     // automatically know it must look for a `libhello.a` file.
@@ -39,7 +42,13 @@ fn main() {
     // makefile is using a special env variable
     let out = Command::new("make")
         // .env("VENDOR_DIR", libdir_path.to_str().unwrap())
-        .args(&["-C", libdir_path.to_str().unwrap(), "static"])
+        .args(&[
+            "-C",
+            libdir_path.to_str().unwrap(),
+            "static",
+            "install",
+            "purge",
+        ])
         .output()
         .expect("could not spawn `make`");
     assert!(out.status.success(), "{:?}", out);
