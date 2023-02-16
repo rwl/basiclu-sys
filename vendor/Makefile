@@ -62,3 +62,6 @@ clean:
 purge: clean
 	$(RM) lib/$(AR_TARGET) lib/$(SO_TARGET) lib/$(SO_PLAIN) lib/$(SO_MAIN)
 	$(RM) example/maxvolume
+
+install:
+	cp lib/$(AR_TARGET) $(OUT_DIR)
