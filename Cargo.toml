@@ -1,6 +1,6 @@
 [package]
 name = "basiclu-sys"
-version = "0.1.0"
+version = "0.1.1"
 description = "Rust FFI bindings for BasicLU"
 edition = "2021"
 license = "MIT OR GPL-3.0-or-later"
