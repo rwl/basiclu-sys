@@ -37,22 +37,20 @@ fn main() {
     // Tell cargo to invalidate the built crate whenever the header changes.
     println!("cargo:rerun-if-changed={}", headers_path_str);
 
-    // compile basiclu library: OS dependant
-    // if cfg!(target_os = "linux") {
-    // makefile is using a special env variable
-    let out = Command::new("make")
-        // .env("VENDOR_DIR", libdir_path.to_str().unwrap())
-        .args(&[
-            "-C",
-            libdir_path.to_str().unwrap(),
-            "static",
-            "install",
-            "purge",
-        ])
-        .output()
-        .expect("could not spawn `make`");
-    assert!(out.status.success(), "{:?}", out);
-    // }
+    // compile basiclu library
+    if cfg!(feature = "static") {
+        let out = Command::new("make")
+            .args(&[
+                "-C",
+                libdir_path.to_str().unwrap(),
+                "static",
+                "install",
+                "purge",
+            ])
+            .output()
+            .expect("could not spawn `make`");
+        assert!(out.status.success(), "{:?}", out);
+    }
 
     // Tell cargo to look for shared libraries in the specified directory
     // println!("cargo:rustc-link-search=/path/to/lib");
