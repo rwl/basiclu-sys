@@ -2,83 +2,79 @@ extern crate bindgen;
 
 use std::env;
 use std::path::PathBuf;
-use std::process::Command;
 
 fn main() {
-    let out_dir = env::var("OUT_DIR").unwrap();
-
-    // This is the directory where the `c` library is located.
-    let libdir_path = PathBuf::from("vendor")
-        // Canonicalize the path as `rustc-link-search` requires an absolute
-        // path.
+    let vendor_path = PathBuf::from("vendor")
         .canonicalize()
         .expect("cannot canonicalize path");
 
-    // This is the path to the `c` headers file.
-    let headers_path = libdir_path.join("include").join("basiclu.h");
-    let headers_path_str = headers_path.to_str().expect("Path is not a valid string");
+    if cfg!(feature = "dynamic") {
+        println!("cargo:rustc-link-lib=basiclu");
+    } else {
+        let src_dir = vendor_path.join("src");
 
-    // This is the path to the intermediate object file for our library.
-    // let obj_path = libdir_path.join("hello.o");
-    // This is the path to the static library file.
-    // let lib_path = libdir_path.join("lib").join("libbasiclu.a");
+        let mut builder = cc::Build::new();
 
-    // Tell cargo to look for shared libraries in the specified directory
-    // println!(
-    //     "cargo:rustc-link-search={}",
-    //     libdir_path.join("lib").to_str().unwrap()
-    // );
-    println!("cargo:rustc-link-search={}", out_dir);
+        builder.flag("-Wno-unused-parameter");
 
-    // Tell cargo to tell rustc to link our `hello` library. Cargo will
-    // automatically know it must look for a `libhello.a` file.
-    println!("cargo:rustc-link-lib=basiclu");
+        builder.include(vendor_path.join("include"));
 
-    // Tell cargo to invalidate the built crate whenever the header changes.
-    println!("cargo:rerun-if-changed={}", headers_path_str);
+        let basiclu_objects = [
+            "basiclu_factorize",
+            "basiclu_get_factors",
+            "basiclu_initialize",
+            "basiclu_object",
+            "basiclu_obj_maxvolume",
+            "basiclu_solve_dense",
+            "basiclu_solve_for_update",
+            "basiclu_solve_sparse",
+            "basiclu_update",
+            "lu_build_factors",
+            "lu_condest",
+            // "lu_def.h",
+            "lu_dfs",
+            "lu_factorize_bump",
+            "lu_file",
+            // "lu_file.h",
+            "lu_garbage_perm",
+            "lu_initialize",
+            "lu_internal",
+            // "lu_internal.h",
+            // "lu_list.h",
+            "lu_markowitz",
+            "lu_matrix_norm",
+            "lu_pivot",
+            "lu_residual_test",
+            "lu_setup_bump",
+            "lu_singletons",
+            "lu_solve_dense",
+            "lu_solve_for_update",
+            "lu_solve_sparse",
+            "lu_solve_symbolic",
+            "lu_solve_triangular",
+            "lu_timer",
+            // "lu_timer.h",
+            "lu_update",
+        ];
 
-    // compile basiclu library
-    if cfg!(feature = "static") {
-        let out = Command::new("make")
-            .args(&[
-                "-C",
-                libdir_path.to_str().unwrap(),
-                "static",
-                "install",
-                "purge",
-            ])
-            .output()
-            .expect("could not spawn `make`");
-        assert!(out.status.success(), "{:?}", out);
+        for obj in basiclu_objects.iter() {
+            builder.file(&src_dir.join(format!("{obj}.c")));
+        }
+
+        builder.compile("basiclu");
     }
 
-    // Tell cargo to look for shared libraries in the specified directory
-    // println!("cargo:rustc-link-search=/path/to/lib");
+    let headers_path = vendor_path.join("include").join("basiclu.h");
+    let headers_path_str = headers_path.to_str().expect("Path is not a valid string");
 
-    // Tell cargo to tell rustc to link the system bzip2
-    // shared library.
-    // println!("cargo:rustc-link-lib=bz2");
-
-    // Tell cargo to invalidate the built crate whenever the wrapper changes
-    // println!("cargo:rerun-if-changed=wrapper.h");
-
-    // The bindgen::Builder is the main entry point
-    // to bindgen, and lets you build up options for
-    // the resulting bindings.
     let bindings = bindgen::Builder::default()
-        // The input header we would like to generate
-        // bindings for.
-        // .header("wrapper.h")
         .header(headers_path_str)
         // Tell cargo to invalidate the built crate whenever any of the
         // included header files changed.
         .parse_callbacks(Box::new(bindgen::CargoCallbacks))
-        // Finish the builder and generate the bindings.
         .generate()
-        // Unwrap the Result and panic on failure.
         .expect("Unable to generate bindings");
 
-    // Write the bindings to the $OUT_DIR/bindings.rs file.
     let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
     bindings
         .write_to_file(out_path.join("bindings.rs"))

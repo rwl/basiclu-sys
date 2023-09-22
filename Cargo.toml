@@ -7,11 +7,7 @@ license = "MIT OR GPL-3.0-or-later"
 repository = "https://github.com/rwl/basiclu-sys"
 
 [build-dependencies]
-bindgen = "0.58"
-#cbindgen = "0.24.3"
+bindgen = "0.68"
+cc = "1"
 
 [dependencies]
-
-#[lib]
-#name = "blurs"
-#crate-type = ["cdylib", "staticlib"]
